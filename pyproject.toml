@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rpgup-pillars-importer"
+version = "0.1.0"
+description = "Extrator local e somente leitura de Pillars of Eternity"
+requires-python = ">=3.11"
+
+[project.scripts]
+rpgup-pillars = "rpgup_pillars.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["extractor"]
+

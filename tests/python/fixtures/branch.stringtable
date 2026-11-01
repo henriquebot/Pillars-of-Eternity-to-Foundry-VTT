@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<StringTableFile><Name>conversations/test/branch</Name><EntryCount>3</EntryCount><Entries>
+  <Entry><ID>0</ID><DefaultText>Mensagem própria: ação, bênção e coração.</DefaultText><FemaleText>Uma variante própria.</FemaleText></Entry>
+  <Entry><ID>1</ID><DefaultText>Investigar o objeto de teste.</DefaultText><FemaleText /></Entry>
+  <Entry><ID>2</ID><DefaultText>Seguir outro caminho de teste.</DefaultText><FemaleText /></Entry>
+</Entries></StringTableFile>

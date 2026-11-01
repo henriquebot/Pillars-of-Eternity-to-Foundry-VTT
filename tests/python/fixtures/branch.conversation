@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ConversationData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <NextNodeID>3</NextNodeID>
+  <Nodes>
+    <FlowChartNode xsi:type="TalkNode">
+      <NodeID>0</NodeID><SpeakerGuid>synthetic-speaker</SpeakerGuid>
+      <Links><FlowChartLink><FromNodeID>0</FromNodeID><ToNodeID>1</ToNodeID></FlowChartLink><FlowChartLink><FromNodeID>0</FromNodeID><ToNodeID>2</ToNodeID></FlowChartLink></Links>
+      <Conditionals><Operator>And</Operator><Components><ExpressionComponent><Not>false</Not><Data><FullName>Boolean SyntheticCondition(String)</FullName><Parameters><string>synthetic</string></Parameters></Data></ExpressionComponent></Components></Conditionals>
+      <OnEnterScripts><ScriptCall><Data><FullName>Void StartQuest(String)</FullName><Parameters><string>assets/data/quests/test/sample.quest</string></Parameters></Data></ScriptCall></OnEnterScripts>
+    </FlowChartNode>
+    <FlowChartNode xsi:type="PlayerResponseNode"><NodeID>1</NodeID><Links /></FlowChartNode>
+    <FlowChartNode xsi:type="PlayerResponseNode"><NodeID>2</NodeID><Links /></FlowChartNode>
+  </Nodes>
+  <CharacterMappings><CharacterMapping><Guid>synthetic-speaker</Guid><InstanceTag>TestGuardian</InstanceTag></CharacterMapping></CharacterMappings>
+</ConversationData>

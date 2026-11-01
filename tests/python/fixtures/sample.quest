@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<QuestData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Nodes>
+  <FlowChartNode xsi:type="QuestNode"><NodeID>0</NodeID><Links><FlowChartLink><FromNodeID>0</FromNodeID><ToNodeID>1</ToNodeID></FlowChartLink></Links></FlowChartNode>
+  <FlowChartNode xsi:type="ObjectiveNode"><NodeID>1</NodeID><Links /><AddendumIDs><int>0</int></AddendumIDs><DescriptionID>1</DescriptionID></FlowChartNode>
+</Nodes><Events><QuestEvent xsi:type="QuestEventTalk"><EventID>0</EventID><Conversation>test/branch</Conversation></QuestEvent></Events><QuestType>1</QuestType></QuestData>

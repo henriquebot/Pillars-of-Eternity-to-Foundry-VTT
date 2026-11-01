@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<StringTableFile><Name>quests/test/sample</Name><Entries>
+  <Entry><ID>0</ID><DefaultText>Missão sintética de validação</DefaultText><FemaleText /></Entry>
+  <Entry><ID>10000</ID><DefaultText>Texto próprio para verificar a descrição.</DefaultText><FemaleText /></Entry>
+  <Entry><ID>1</ID><DefaultText>Investigar o objeto de teste</DefaultText><FemaleText /></Entry>
+  <Entry><ID>10001</ID><DefaultText>Detalhe do primeiro objetivo sintético.</DefaultText><FemaleText /></Entry>
+  <Entry><ID>20000</ID><DefaultText>Uma pista escrita exclusivamente para teste.</DefaultText><FemaleText /></Entry>
+  <Entry><ID>30000</ID><DefaultText>Conclusão do cenário sintético.</DefaultText><FemaleText /></Entry>
+</Entries></StringTableFile>

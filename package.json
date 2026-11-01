@@ -1,0 +1,14 @@
+{
+  "name": "rpgup-pillars-importer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Importador local de Pillars of Eternity para Foundry VTT, sem recursos comerciais incluídos",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test tests/js/*.test.mjs",
+    "test:python": "python -m unittest discover -s tests/python -v",
+    "build": "python tools/build_release.py",
+    "verify": "python tools/verify.py"
+  }
+}

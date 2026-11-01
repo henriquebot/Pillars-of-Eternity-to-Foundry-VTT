@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:rpgup:campaign:1.0.0",
+  "title": "RPG UP Campaign Intermediate Representation",
+  "type": "object",
+  "required": ["schemaVersion", "id", "source", "entities"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "source": { "type": "object" },
+    "entities": { "type": "array", "maxItems": 100000, "items": { "$ref": "#/$defs/entity" } },
+    "diagnostics": { "type": "array" }
+  },
+  "$defs": {
+    "entity": {
+      "type": "object",
+      "required": ["id", "kind", "name", "provenance", "data"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "kind": { "enum": ["map", "pin", "npc", "item", "container", "quest", "dialogue", "transition", "encounter", "lore"] },
+        "sourceId": { "type": "string" },
+        "name": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string" } },
+        "provenance": {
+          "type": "object",
+          "required": ["source", "sourceId", "extractedAt", "status"],
+          "properties": {
+            "source": { "type": "string" },
+            "path": { "type": "string" },
+            "url": { "type": "string" },
+            "sourceId": { "type": "string" },
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "extractedAt": { "type": "string" },
+            "status": { "enum": ["extracted", "converted", "adapted", "manual", "pending", "unsupported"] }
+          }
+        },
+        "data": { "type": "object" }
+      }
+    }
+  }
+}

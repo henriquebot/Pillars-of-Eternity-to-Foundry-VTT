@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-11-01T03:43:39.493029+00:00",
+  "basis": "no-game-data-processed",
+  "campaignId": null,
+  "foundryRuntimeExecuted": false,
+  "rows": [
+    {
+      "kind": "map",
+      "label": "Mapas",
+      "found": 0,
+      "imported": 0,
+      "validated": 0,
+      "pending": 0
+    },
+    {
+      "kind": "pin",
+      "label": "Pinos",
+      "found": 0,
+      "imported": 0,
+      "validated": 0,
+      "pending": 0
+    },
+    {
+      "kind": "npc",
+      "label": "NPCs",
+      "found": 0,
+      "imported": 0,
+      "validated": 0,
+      "pending": 0
+    },
+    {
+      "kind": "item",
+      "label": "Itens",
+      "found": 0,
+      "imported": 0,
+      "validated": 0,
+      "pending": 0
+    },
+    {
+      "kind": "container",
+      "label": "Contêineres",
+      "found": 0,
+      "imported": 0,
+      "validated": 0,
+      "pending": 0
+    },
+    {
+      "kind": "quest",
+      "label": "Quests",
+      "found": 0,
+      "imported": 0,
+      "validated": 0,
+      "pending": 0
+    },
+    {
+      "kind": "dialogue",
+      "label": "Diálogos",
+      "found": 0,
+      "imported": 0,
+      "validated": 0,
+      "pending": 0
+    },
+    {
+      "kind": "transition",
+      "label": "Entradas e saídas",
+      "found": 0,
+      "imported": 0,
+      "validated": 0,
+      "pending": 0
+    },
+    {
+      "kind": "encounter",
+      "label": "Encontros",
+      "found": 0,
+      "imported": 0,
+      "validated": 0,
+      "pending": 0
+    },
+    {
+      "kind": "lore",
+      "label": "Textos de lore",
+      "found": 0,
+      "imported": 0,
+      "validated": 0,
+      "pending": 0
+    }
+  ],
+  "limitations": [
+    "Encontrados conta apenas entidades no IR processado, não todo o conteúdo existente no jogo.",
+    "Importados/validados ficam em zero enquanto não houver execução e evidências reais do Foundry.",
+    "Fixtures sintéticas não representam cobertura do jogo e não devem alimentar o relatório de campanha."
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "rpgup-pillars-importer",
+  "title": "RPG UP — Pillars Campaign Manager",
+  "description": "Importação local e revisável de recursos de Pillars of Eternity. Versão de desenvolvimento; validação real no Foundry pendente.",
+  "version": "0.1.0",
+  "authors": [{"name": "RPG UP"}],
+  "compatibility": {"minimum": "14", "maximum": "14"},
+  "relationships": {"systems": [{"id": "dnd5e", "type": "system", "compatibility": {"minimum": "6.0.0", "maximum": "6.0.99"}}]},
+  "esmodules": ["scripts/main.mjs"],
+  "styles": ["styles/manager.css"],
+  "languages": [
+    {"lang": "pt-BR", "name": "Português (Brasil)", "path": "lang/pt-BR.json"},
+    {"lang": "en", "name": "English", "path": "lang/en.json"}
+  ],
+  "packs": []
+}

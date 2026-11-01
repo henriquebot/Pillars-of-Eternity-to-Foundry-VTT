@@ -1,0 +1,40 @@
+name: Testes e build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verificar em ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Testar componentes independentes
+        run: python tools/verify.py
+      - name: Gerar módulo sem recursos comerciais
+        run: python tools/build_release.py
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rpgup-pillars-${{ runner.os }}
+          path: |
+            dist/rpgup-pillars-importer-*.zip
+            dist/release.json
+          if-no-files-found: error

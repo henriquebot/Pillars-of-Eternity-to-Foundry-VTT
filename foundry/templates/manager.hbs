@@ -1,0 +1,23 @@
+<section class="rpgup-content">
+  <p class="rpgup-warning">{{localize "RPGUP.Development"}}</p>
+  <p>{{localize "RPGUP.Environment"}}: {{environment}}</p>
+  <div class="rpgup-load"><input type="file" accept=".json,application/json" aria-label="{{localize 'RPGUP.ChooseFile'}}"><button type="button" data-action="load">{{localize "RPGUP.Load"}}</button></div>
+  <p>{{localize "RPGUP.Privacy"}}</p>
+  {{#if loaded}}
+  <p><strong>{{bundleName}}</strong> — {{total}} {{localize "RPGUP.Records"}}</p>
+  <div class="rpgup-filters">
+    <input name="query" value="{{query}}" placeholder="{{localize 'RPGUP.Search'}}" aria-label="{{localize 'RPGUP.Search'}}">
+    <select name="kind" aria-label="{{localize 'RPGUP.Kind'}}"><option value="">{{localize "RPGUP.AllKinds"}}</option>{{#each kinds}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>{{/each}}</select>
+    <select name="region" aria-label="{{localize 'RPGUP.Region'}}"><option value="">{{localize "RPGUP.AllRegions"}}</option>{{#each regions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>{{/each}}</select>
+    <button type="button" data-action="filter">{{localize "RPGUP.Filter"}}</button>
+  </div>
+  <p>{{filtered}} {{localize "RPGUP.Matches"}}{{#if truncated}} — {{localize "RPGUP.Limited"}}{{/if}}</p>
+  <div class="rpgup-records"><table><thead><tr><th></th><th>{{localize "RPGUP.Name"}}</th><th>{{localize "RPGUP.Kind"}}</th><th>{{localize "RPGUP.Region"}}</th><th>{{localize "RPGUP.QuestState"}}</th></tr></thead><tbody>{{#each rows}}<tr><td><input type="checkbox" data-entity-index="{{index}}" {{#if selected}}checked{{/if}} aria-label="{{name}}"></td><td><button type="button" data-action="inspect" data-index="{{index}}">{{name}}</button></td><td>{{kind}}</td><td>{{act}} {{region}}</td><td>{{#if quest}}<button type="button" data-action="cycleQuest" data-index="{{index}}" title="{{localize 'RPGUP.AdvanceState'}}">{{state}}</button>{{/if}}</td></tr>{{/each}}</tbody></table></div>
+  <button type="button" data-action="import"><i class="fa-solid fa-file-import"></i> {{localize "RPGUP.ImportSelected"}}</button>
+  <p>{{localize "RPGUP.ImportHint"}}</p>
+  {{#if detailName}}<article class="rpgup-detail"><h3>{{detailName}}</h3>{{#if preview}}<img src="{{preview}}" alt="{{detailName}}">{{/if}}<pre>{{detailText}}</pre></article>{{/if}}
+  {{/if}}
+  {{#if hasResult}}<h3>{{localize "RPGUP.Result"}}</h3><pre>{{resultText}}</pre>{{/if}}
+  <div class="rpgup-actions"><button type="button" data-action="diagnostics">{{localize "RPGUP.Diagnostics"}}</button><button type="button" data-action="storedBackups">{{localize "RPGUP.StoredBackups"}}</button>{{#if hasBackup}}<button type="button" data-action="backup">{{localize "RPGUP.DownloadBackup"}}</button>{{/if}}</div>
+  <details><summary>{{localize "RPGUP.Integrations"}}</summary>{{#each conflicts}}<p class="rpgup-warning">{{this}}</p>{{/each}}<ul>{{#each integrations}}<li>{{id}}: {{#if active}}{{localize "RPGUP.Active"}}{{else}}{{localize "RPGUP.Inactive"}}{{/if}} — {{validation}}</li>{{/each}}</ul></details>
+</section>
