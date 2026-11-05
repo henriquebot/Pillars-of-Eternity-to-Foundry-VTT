@@ -16,7 +16,7 @@ Também há uma API de abertura para macros do GM:
 game.modules.get("rpgup-pillars-importer").api.open();
 ```
 
-A URL prevista para instalação é `https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.json`; ela só funcionará após a publicação de uma release com manifesto e ZIP. O repositório existe, mas ainda não há release instalável. Nenhum recurso comercial do jogo integra o ZIP. Os caminhos Linux/Docker abaixo do `UserData` são configurados pelo operador e não são os caminhos da instalação Windows do jogo.
+A URL de instalação da **release pública v0.1.0** é `https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.json`; o GitHub publica `module.json` e `module.zip` juntos. **Não substitua uma instalação local v0.1.5 ou v0.1.6 por essa versão pública mais antiga.** O código mais recente ainda não foi sincronizado ao repositório. Nenhum recurso comercial do jogo integra o ZIP. Os caminhos Linux/Docker abaixo do `UserData` são configurados pelo operador e não são os caminhos da instalação Windows do jogo.
 
 ## O que funciona no código e nos testes independentes
 
