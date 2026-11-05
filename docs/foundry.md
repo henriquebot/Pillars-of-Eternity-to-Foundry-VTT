@@ -1,6 +1,6 @@
-# Módulo Foundry — versão pública 0.1.7 (linha Foundry v14.370)
+# Módulo Foundry — versão pública 0.1.8 (linha Foundry v14.370)
 
-O módulo é uma base executável de desenvolvimento para Foundry 14.370 e dnd5e 6.0.x. O código local 0.1.6 foi sincronizado e publicado; a versão 0.1.7 corrige somente os metadados/acentos do manifesto. Houve validação real do adaptador Glimpse em um piloto de três pins na cena Encampment, com reimportação idempotente. A validação de cliente jogador, apresentação visual e lote de maior volume ainda está pendente. O manifesto não declara `verified` para evitar alegar homologação integral.
+O módulo é uma base executável de desenvolvimento para Foundry 14.370 e dnd5e 6.0.x. O código local 0.1.6 foi sincronizado e publicado; a versão 0.1.8 acrescenta a indicação de compatibilidade verificada com Foundry 14.370, sem modificar as funcionalidades. Houve validação real do adaptador Glimpse em um piloto de três pins na cena Encampment, com reimportação idempotente. A validação de cliente jogador, apresentação visual e lote de maior volume ainda está pendente. O manifesto declara `compatibility.verified: 14.370` devido à validação real no ambiente de testes; isso não significa que todas as funcionalidades estejam homologadas.
 
 ## Instalação local de teste
 
@@ -16,7 +16,7 @@ Também há uma API de abertura para macros do GM:
 game.modules.get("rpgup-pillars-importer").api.open();
 ```
 
-A URL do manifesto da **release pública v0.1.7** é `https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.json`; o GitHub publica `module.json` e `module.zip` juntos. A versão 0.1.7 corresponde à base funcional 0.1.6, com correção dos acentos do manifesto. Nenhum recurso comercial do jogo integra o ZIP. Os caminhos Linux/Docker abaixo do `UserData` são configurados pelo operador e não são os caminhos da instalação Windows do jogo.
+A URL do manifesto da **release pública v0.1.8** é `https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.json`; o GitHub publica `module.json` e `module.zip` juntos. A versão 0.1.8 corresponde à base funcional 0.1.6, com a declaração `verified: 14.370` e os acentos corrigidos. Nenhum recurso comercial do jogo integra o ZIP. Os caminhos Linux/Docker abaixo do `UserData` são configurados pelo operador e não são os caminhos da instalação Windows do jogo.
 
 ## O que funciona no código e nos testes independentes
 
