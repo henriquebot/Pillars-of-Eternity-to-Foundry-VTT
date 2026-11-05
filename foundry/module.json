@@ -2,7 +2,7 @@
   "id": "rpgup-pillars-importer",
   "title": "RPG UP — Pillars Campaign Manager",
   "description": "Importação local e revisável de mapas, pins Glimpse e recursos de Pillars of Eternity. Versão de desenvolvimento.",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "authors": [
     {
       "name": "RPG UP"
@@ -10,6 +10,7 @@
   ],
   "compatibility": {
     "minimum": "14",
+    "verified": "14.370",
     "maximum": "14"
   },
   "relationships": {
