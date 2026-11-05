@@ -21,9 +21,9 @@
 ## Etapa de desenvolvimento atual: Glimpse
 
 - Seis imagens de cenas foram aprovadas visualmente pelo GM. Não reconstruir ou alterar essas cenas sem motivo comprovado. A nova Encampment contém piloto com **3 Glimpse Notes e 3 Journals**, 3/3 idempotentes.
-- Próximo passo: **homologação** (cards/posições por CDP, visibilidade e spoilers com Player real se houver credenciais autorizadas, revisão de mídia e edição manual). Depois, teste de lote de Encampment apenas para dados/posições confiáveis. Demais cinco cenas ficam inalteradas.
+- **Validação de visibilidade como Player concluída manualmente pelo usuário:** ele confirmou que enxergou somente o conteúdo esperado. **Não repetir essa checagem nem solicitar novo login Player.** Próximo passo: homologar cards/posições por CDP, revisar mídia e testar preservação de edição manual; depois, lote de Encampment com dados/posições confiáveis. Demais cinco cenas ficam inalteradas.
 - Para Glimpse, preferir `locations.plan()` → `locations.apply()` → `locations.export()`; manifesto derivado do IR, sem conteúdo secreto em campos públicos. Os pins/journals anteriores ao novo piloto são fixtures descartáveis, não fazem parte do contrato de migração.
-- Nunca afirmar teste como Player a partir de sessão GM. Ausência de Player é **pendência**, não sucesso ou motivo para criar credenciais sem autorização.
+- A conferência de visibilidade do Player foi relatada e aprovada pelo usuário; registrar como **validação manual do usuário**, não como auditoria técnica automatizada de flags/rede. Não criar credenciais Player nem repetir o teste já realizado; investigar permissões novamente apenas se surgir regressão concreta.
 
 ## Qualidade, documentação e release
 
