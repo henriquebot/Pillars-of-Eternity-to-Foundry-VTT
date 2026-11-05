@@ -1,0 +1,62 @@
+name: Publicar módulo Foundry
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Validar e publicar manifest + ZIP
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verificar testes
+        run: python tools/verify.py
+      - name: Conferir versão da tag
+        shell: bash
+        run: |
+          VERSION="$(python -c "import json; print(json.load(open('foundry/module.json', encoding='utf-8'))['version'])")"
+          if [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME não corresponde à versão $VERSION do manifesto"
+            exit 1
+          fi
+      - name: Gerar ZIP sem conteúdo comercial
+        run: python tools/build_release.py
+      - name: Preparar arquivos de instalação
+        shell: bash
+        run: |
+          VERSION="$(python -c "import json; print(json.load(open('foundry/module.json', encoding='utf-8'))['version'])")"
+          test -f "dist/rpgup-pillars-importer-$VERSION.zip"
+          cp "dist/rpgup-pillars-importer-$VERSION.zip" dist/module.zip
+          cp foundry/module.json dist/module.json
+          python - <<'PY'
+          import json, zipfile
+          from pathlib import Path
+          m = json.loads(Path("dist/module.json").read_text(encoding="utf-8"))
+          with zipfile.ZipFile("dist/module.zip") as z:
+              files = set(z.namelist())
+              assert "module.json" in files
+              packaged = json.loads(z.read("module.json"))
+              assert packaged["id"] == m["id"] and packaged["version"] == m["version"]
+              assert all(not n.startswith(("local/", "dist/", "../")) for n in files)
+              assert all(not n.lower().endswith((".png", ".jpg", ".jpeg", ".webp", ".wav", ".ogg", ".mp3")) for n in files)
+          PY
+      - name: Publicar GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/module.json dist/module.zip \
+            --title "RPG UP Pillars Importer $GITHUB_REF_NAME" \
+            --generate-notes
