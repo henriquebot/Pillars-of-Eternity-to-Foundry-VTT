@@ -1,18 +1,30 @@
-# Validação e evidências
+# Plano de validação e evidências
 
-`python tools/verify.py` executa testes Python e Node. Esses testes usam pequenas fixtures próprias e dublês da API Foundry quando necessário; não carregam o servidor Foundry, o sistema D&D ou módulos de terceiros. O número e resultado da última execução estão em `docs/test-results.md`.
+Referência operacional: [estado atual](current-status.md). Desenvolvimento em **Foundry Desktop 14.370**, **dnd5e 6.0.6**, **Glimpse 1.3.0**, mundo **`rpgup-pillars-tests`**. Código público na release **0.1.8**; a versão efetivamente carregada precisa ser verificada em cada sessão.
 
-Checklist pendente em ambiente real, por mundo descartável:
+## Já demonstrado
 
-1. Instalar em 14.369/dnd5e6.0.x sem módulos opcionais; abrir painel GM e verificar que jogador não tem acesso.
-2. Extrair uma instalação legítima e revisar nomes, traduções, ligações de conversa e quests contra o jogo.
-3. Importar o piloto Encampment, Cilant Lîs e Gilded Vale quando houver assets/posições reais; não usar fixtures como evidência de campanha.
-4. Entrar com usuário jogador separado; inspecionar journals e documentos recebidos, impedindo leitura de spoilers, flags e textos GM.
-5. Conferir dimensões e marcadores em pontos de controle, registrar erro em pixels. Calibrar manualmente quando necessário.
-6. Testar posicionamento e movimento de tokens, distância, alcance de ataques, paredes, portas, visão e iluminação. Só depois marcar uma cena pronta para combate.
-7. Saquear um contêiner real, transferir itens, reimportar, confirmar que o saque não reaparece; itens e automações ainda dependem das funcionalidades implementadas.
-8. Avançar uma quest, editar um journal, reimportar e verificar preservação. Induzir falha em mundo descartável e validar recuperação pelo backup.
-9. Repetir em segundo mundo e verificar estados separados. Não reutilizar dados de progresso como conteúdo compartilhado.
-10. Habilitar cada opcional isoladamente, com versões registradas; confirmar compatibilidade por comportamento observado. Nenhum deles foi validado neste projeto.
+- O console CDP via PowerShell executa JavaScript no Foundry autenticado como GM, sem controle da interface gráfica.
+- O importador criou as seis novas cenas do prólogo; a aparência dos fundos foi conferida pelo GM. A posição/estrutura de mosaicos de Valewood e Gilded Vale foi corrigida.
+- Piloto Glimpse no novo Encampment: **3 Notes, 3 Journals**, exportação confirmada, **3/3 unchanged** na reimportação e nenhuma duplicação detectada.
+- Testes independentes: **82 Python e 104 Node** aprovados na base 0.1.6; release 0.1.8 publicada via CI.
 
-Capturar versões, IDs e resultados por teste, com falhas explícitas. Capturas e recibos locais podem ficar em `local/validation/`, ignorado pelo Git. O relatório de cobertura conta somente entidades processadas; sem importação real todos os valores de importação/validação continuam zero.
+## Próximos testes de aceitação
+
+1. Verificar `-Probe` com a release mais recente realmente carregada: versão, GM, mundo e API do Glimpse. Não confundir versão no Git com runtime.
+2. Conferir **visualmente** no novo Encampment os três cards, posição, ícone, textos, fatos, imagens, comportamento de hover/abertura e eventuais 404. Usar CDP com autorização; registrar limitações se não for possível obter captura fiel.
+3. Em **cliente Player real, com login autorizado**, conferir permissões, páginas de GM, nomes de NPCs, flags, rumores, descoberta, fog/visão e vazamento de informações no conteúdo recebido. **Sessão GM não conta como Player.**
+4. Fazer edição manual controlada de um pin/journal do lote, reimportar e demonstrar preservação ou conflito explícito sem sobrescrita.
+5. Inspecionar mídia: somente imagens e sons originais associados com segurança. Sem inventar retratos, sons ou dados.
+6. Se o piloto estiver satisfatório, tentar até **10–20 novos pins** só com IDs, textos e coordenadas verificáveis. `locations.plan` antes de `apply`, depois `locations.export`; verificar latência, posições, duplicação e reimportação.
+7. Somente após aceitação, expandir o fluxo para outras cenas do prólogo. Sem habilitar funcionalidades de combate sem paredes, distância, iluminação, colisão e movimento realmente testados.
+8. Futuramente: segundo mundo de teste, autenticação separada, quests e estado de mundo, backups/recuperação, combinações DAS e outros módulos.
+
+## Restrições
+
+- Nada de alteração em mundo de produção, cinco cenas não alvo do piloto, Encampment antiga ou dados do GM fora do lote.
+- Inventariar antes das escritas, backup, `plan/apply/export`, reimportação idempotente.
+- Recursos comerciais, dados de jogadores, links privados, dumps, credenciais, capturas e evidências ficam **fora do GitHub**, em `local/validation/` quando aplicável.
+- Testes independentes usam fixtures e mocks e **não** certificam a segurança das permissões reais nem o comportamento dos módulos de terceiros.
+
+Registrar sempre resultados positivos, falhas, versões efetivamente carregadas, alvos de escrita e pendências com evidência. Referência dos resultados: [test-results.md](test-results.md).
