@@ -1,26 +1,28 @@
-# Resultados executados em 01/11/2026
+# Resultados e limites da validação (05/11/2026)
 
-Última execução completa: `python tools/verify.py`, exit code **0**.
+## Suíte independente do código 0.1.6 / release v0.1.8
+
+No PowerShell Windows, após sincronizar código, testes e ferramentas da mesma versão, `python tools/verify.py` terminou com **exit code 0**:
 
 | Suíte | Executados | Aprovados | Falhas |
 |---|---:|---:|---:|
-| Python (extrator, empacotador, catálogo e release/relatório) | 59 | 59 | 0 |
-| Node (módulo, narrativa, geometria, D&D, referências públicas, manifesto e integração CLI) | 62 | 62 | 0 |
-| **Total independente** | **121** | **121** | **0** |
+| Python | 82 | 82 | 0 |
+| Node.js | 104 | 104 | 0 |
+| **Total** | **186** | **186** | **0** |
 
-Ambiente: Windows, Python **3.13.15**, Node **24.19.0**, sem dependências de runtime instaladas para estas suítes. As fixtures são próprias e sintéticas. O ensaio que cruza Python CLI → JSON compacto → consumidor Foundry usa essas fixtures e não o jogo comercial.
+O build `python tools/build_release.py` também passou: `rpgup-pillars-importer-0.1.6.zip` com **14 arquivos permitidos** e `commercialResourcesIncluded: false`. A release v0.1.8 usa a mesma base funcional e corrige metadados do manifesto. O GitHub Actions executou testes e publicou `module.json` e `module.zip` com sucesso para v0.1.8.
 
-Foram executadas regressões de arquivos ausentes, Unicode, DTD/XML malformado, duplicatas, overlays, IDs, fallback de idioma, saídas proibidas na origem, limites do pacote, hash/dimensões de imagens, idempotência, backups, cancelamento de escrita, falhas parciais, conflitos com edições GM e separação entre dois contextos de mundo simulados.
+Essas suítes usam dados próprios/fixtures e dublês de API quando necessário; **não substituem ensaios reais como GM/Player**. O hash e as evidências de compilações locais estão em `local/validation/`, não no repositório público.
 
-O build local também foi executado: `python tools/build_release.py`. O teste do build verificou conteúdo por allowlist e igualdade do SHA-256 entre dois empacotamentos idênticos. O hash da release atual está em `dist/release.json`.
+## Evidência de Foundry real
 
-## Evidência real de ambiente, sem confundir com integração
+- Foundry Desktop **14.370**, sistema dnd5e **6.0.6**, mundo isolado `rpgup-pillars-tests`.
+- CDP/PowerShell `Invoke-FoundryCdp.ps1 -Probe` foi executado com sucesso tanto pelo usuário quanto pelo Codex, confirmando GM ativo; a primeira validação confirmou importer **0.1.5** carregado. A **instalação e inicialização da release 0.1.8 ainda devem ser verificadas por novo probe**, e não inferidas da publicação.
+- Seis cenas do prólogo importadas na nova pasta. O GM conferiu o aspecto dos fundos; Valewood e Gilded Vale tiveram mosaicos corrigidos. Isto **não atesta combate, paredes, navegação, luz ou visibilidade**.
+- Piloto de três pins no **novo Encampment**, com Glimpse **1.3.0**: **3 Notes + 3 Journals**; `locations.export()` confirmou os três, e reimportação marcou **3/3 unchanged**, sem duplicatas. O adaptador da base 0.1.6 foi executado via CDP enquanto o runtime ainda informava 0.1.5.
+- As outras cinco cenas e a Encampment antiga não tiveram seus dados alterados pelo piloto.
+- Ainda **sem** conferência visual dos cards, teste por usuário Player, mídia específica/sons confirmados, teste de volume e validação completa da preservação de edições manuais no mundo real.
 
-- Setup de ambiente autorizado: versão **14 Build 369** observada na interface.
-- Lista Sistemas: Dungeons & Dragons Fifth Edition **6.0.6** observado.
-- Scanner real consultou 10 candidatos e identificou sinais de download Steam ainda em andamento, sem instalação final legível. Resultado em `local/scan.json`, ignorado pelo Git.
-- Nenhuma extração de campanha comercial concluída. Os zeros de `docs/coverage.md` significam **nenhum conteúdo comercial processado**, não ausência de conteúdo no jogo.
+## Próxima verificação
 
-**Ainda pendentes:** carregar nosso módulo no Foundry; criar/importar documentos reais; cliente jogador/permissões; carregamento e calibração dos mapas; movimentação, combate, iluminação, loot; dois mundos reais e módulos opcionais. Os testes com dublês de documentos não certificam esses comportamentos.
-
-A cópia do módulo e a criação de um mundo descartável foram realizadas com autorização explícita. O manifesto foi entregue pelo servidor e o mundo chegou à gestão de usuários; o módulo ainda não foi habilitado ou validado em execução. Os registros e caminhos desse ambiente permanecem em anotações locais, fora do repositório público.
+Seguir o [estado atual](current-status.md) e [validação](validation.md). Capturar versões e evidências por ação real; atualizar esta página somente com resultados observados. Não converter testes de mocks em homologação da plataforma.
