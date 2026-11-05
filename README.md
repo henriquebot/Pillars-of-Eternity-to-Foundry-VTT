@@ -2,7 +2,7 @@
 
 Ferramentas de extração e importação local de **Pillars of Eternity 1 / The White March** para **Foundry VTT v14 (referência de desenvolvimento: 14.370)**, com **D&D 5e 6.0.x / regras 2024**. Interface PT-BR.
 
-> **Estado do repositório:** o código público ainda identifica o módulo como **0.1.0** e não corresponde integralmente à versão **0.1.6** desenvolvida e testada localmente. Os testes locais do importador 0.1.6 em Foundry 14.370, incluindo um piloto com Glimpse, **não homologam automaticamente** o código público 0.1.0. Não utilizar este repositório como uma release pronta da campanha.
+> **Estado:** o módulo foi sincronizado com o código local 0.1.6 e testado em Foundry 14.370 (mundo de testes), com um piloto de três pins Glimpse. A release **0.1.7** é uma correção de metadados/acentuação do manifesto sobre a mesma base funcional. **Ainda não é uma campanha completa pronta para combate**: falta validar a apresentação dos cards, o acesso como jogador e o processamento em volume.
 
 O projeto pesquisa a conversão de mapas pré-renderizados, textos, quests, NPCs, itens e pontos de interesse para cenas, journals e outros recursos do Foundry. O foco é um pipeline reutilizável, com dados intermediários versionados, origem rastreável e reimportação controlada. A conversão não equivale a uma campanha completa e pronta para combate.
 
@@ -10,17 +10,17 @@ O projeto pesquisa a conversão de mapas pré-renderizados, textos, quests, NPCs
 
 ## Manifesto e instalação
 
-O manifesto-fonte está em [`foundry/module.json`](foundry/module.json). O instalador de módulos do Foundry requer **um manifesto remoto e um ZIP de módulo publicados juntos**. Os dois estão disponíveis na release v0.1.0.
+O manifesto-fonte está em [`foundry/module.json`](foundry/module.json). O instalador de módulos do Foundry requer **um manifesto remoto e um ZIP de módulo publicados juntos**. Os dois são publicados juntos nas [releases do projeto](https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases).
 
-A URL de instalação prevista para uma **release publicada** é:
+Para instalar pelo Foundry, use a **URL do manifesto da release mais recente**:
 
 ```text
 https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.json
 ```
 
-**Release pública disponível:** [v0.1.0](https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/tag/v0.1.0), com `module.json` e `module.zip`. Cole a URL acima no campo **Instalar módulo → URL do manifesto** do Foundry v14. **Essa release é a versão pública 0.1.0, anterior ao desenvolvimento local 0.1.6. Não a utilize para atualizar um módulo local 0.1.5/0.1.6.**
+**Publicação atual: v0.1.7**, com `module.json` e `module.zip`. Cole a URL acima em **Instalar módulo → URL do manifesto** no Foundry v14. A 0.1.7 corrige os caracteres do manifesto publicado com a 0.1.6, sem alterar as funcionalidades. Para substituir instalação local, faça backup do UserData e confira a versão do mundo de testes.
 
-O workflow [Publicar módulo Foundry](.github/workflows/publish-module.yml) testa, empacota e publica automaticamente `module.json` e `module.zip` para cada nova versão do manifesto enviada à branch principal ou por tag compatível. **Para publicar 0.1.6**, ainda é necessário sincronizar o código local com o GitHub e atualizar `foundry/module.json` para `0.1.6`; não basta alterar só o número de versão. Para instalação de desenvolvimento, consulte [as instruções locais](docs/installation.md).
+O workflow [Publicar módulo Foundry](.github/workflows/publish-module.yml) testa, empacota e publica `module.json` e `module.zip` quando a versão do manifesto muda. O ZIP inclui apenas código e interfaces do módulo, sem recursos comerciais. Para instalação de desenvolvimento, consulte [as instruções locais](docs/installation.md).
 
 ## Desenvolvimento
 
