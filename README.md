@@ -10,7 +10,7 @@ O projeto pesquisa a conversão de mapas pré-renderizados, textos, quests, NPCs
 
 ## Manifesto e instalação
 
-O manifesto-fonte está em [`foundry/module.json`](foundry/module.json). O instalador de módulos do Foundry requer **um manifesto remoto e um ZIP de módulo publicados juntos**.
+O manifesto-fonte está em [`foundry/module.json`](foundry/module.json). O instalador de módulos do Foundry requer **um manifesto remoto e um ZIP de módulo publicados juntos**. Os dois estão disponíveis na release v0.1.0.
 
 A URL de instalação prevista para uma **release publicada** é:
 
@@ -18,9 +18,9 @@ A URL de instalação prevista para uma **release publicada** é:
 https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.json
 ```
 
-**Atenção:** ainda **não há release publicada** no GitHub. Por enquanto, essa URL não permite instalar o módulo. Não confundir o arquivo-fonte do manifesto com uma publicação instalável.
+**Release pública disponível:** [v0.1.0](https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/tag/v0.1.0), com `module.json` e `module.zip`. Cole a URL acima no campo **Instalar módulo → URL do manifesto** do Foundry v14. **Essa release é a versão pública 0.1.0, anterior ao desenvolvimento local 0.1.6. Não a utilize para atualizar um módulo local 0.1.5/0.1.6.**
 
-O workflow [Publicar módulo Foundry](.github/workflows/publish-module.yml) foi preparado para executar testes e publicar `module.json` e `module.zip` quando uma tag de versão compatível com o manifesto for enviada. **Antes de publicar**, sincronizar com o GitHub o código local mais recente, atualizar `foundry/module.json` e conferir a ausência de arquivos comerciais. Para instalação de desenvolvimento, use [as instruções locais](docs/installation.md).
+O workflow [Publicar módulo Foundry](.github/workflows/publish-module.yml) testa, empacota e publica automaticamente `module.json` e `module.zip` para cada nova versão do manifesto enviada à branch principal ou por tag compatível. **Para publicar 0.1.6**, ainda é necessário sincronizar o código local com o GitHub e atualizar `foundry/module.json` para `0.1.6`; não basta alterar só o número de versão. Para instalação de desenvolvimento, consulte [as instruções locais](docs/installation.md).
 
 ## Desenvolvimento
 
