@@ -1,6 +1,6 @@
-# Módulo Foundry — estado real da versão 0.1.0
+# Módulo Foundry — estado do código público 0.1.0 (linha Foundry v14.370)
 
-O módulo é uma base executável de desenvolvimento, com testes independentes. **Não foi instalado nem executado em Foundry real nesta entrega.** O alvo solicitado é Foundry 14.369 / dnd5e 6.0.x. O manifesto não preenche `verified`, pois a compatibilidade não foi validada. A documentação pública consultada em 01/11/2026 identifica sua versão como 14.368; o patch 14.369 precisa de ensaio próprio.
+O módulo é uma base executável de desenvolvimento, com testes independentes. **Não foi instalado nem executado em Foundry real nesta entrega.** O alvo de desenvolvimento atual é Foundry 14.370 / dnd5e 6.0.x. O manifesto público 0.1.0 não declara `verified` porque essa versão do código ainda não foi validada em execução real; o piloto local testado na versão 0.1.6 não está publicado neste repositório.
 
 ## Instalação local de teste
 
@@ -16,7 +16,7 @@ Também há uma API de abertura para macros do GM:
 game.modules.get("rpgup-pillars-importer").api.open();
 ```
 
-Não há URL de instalação pública: o projeto não foi publicado. Nenhum recurso comercial do jogo integra o ZIP. Os caminhos Linux/Docker abaixo do `UserData` são configurados pelo operador e não são os caminhos da instalação Windows do jogo.
+A URL prevista para instalação é `https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.json`; ela só funcionará após a publicação de uma release com manifesto e ZIP. O repositório existe, mas ainda não há release instalável. Nenhum recurso comercial do jogo integra o ZIP. Os caminhos Linux/Docker abaixo do `UserData` são configurados pelo operador e não são os caminhos da instalação Windows do jogo.
 
 ## O que funciona no código e nos testes independentes
 
