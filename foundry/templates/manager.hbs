@@ -13,8 +13,14 @@
   </div>
   <p>{{filtered}} {{localize "RPGUP.Matches"}}{{#if truncated}} — {{localize "RPGUP.Limited"}}{{/if}}</p>
   <div class="rpgup-records"><table><thead><tr><th></th><th>{{localize "RPGUP.Name"}}</th><th>{{localize "RPGUP.Kind"}}</th><th>{{localize "RPGUP.Region"}}</th><th>{{localize "RPGUP.QuestState"}}</th></tr></thead><tbody>{{#each rows}}<tr><td><input type="checkbox" data-entity-index="{{index}}" {{#if selected}}checked{{/if}} aria-label="{{name}}"></td><td><button type="button" data-action="inspect" data-index="{{index}}">{{name}}</button></td><td>{{kind}}</td><td>{{act}} {{region}}</td><td>{{#if quest}}<button type="button" data-action="cycleQuest" data-index="{{index}}" title="{{localize 'RPGUP.AdvanceState'}}">{{state}}</button>{{/if}}</td></tr>{{/each}}</tbody></table></div>
-  <button type="button" data-action="import"><i class="fa-solid fa-file-import"></i> {{localize "RPGUP.ImportSelected"}}</button>
+  <fieldset class="rpgup-subsystems">
+    <legend>{{localize "RPGUP.Subsystems"}}</legend>
+    {{#each subsystems}}<label><input type="checkbox" data-subsystem="{{key}}" {{#if checked}}checked{{/if}}> {{label}}</label>{{/each}}
+  </fieldset>
+  <button type="button" data-action="preview"><i class="fa-solid fa-magnifying-glass"></i> {{localize "RPGUP.PreviewImport"}}</button>
+  {{#if hasPending}}<button type="button" data-action="applyPreview"><i class="fa-solid fa-file-import"></i> {{localize "RPGUP.ApplyPreview"}}</button><h3>{{localize "RPGUP.DryRun"}}</h3><pre>{{pendingText}}</pre>{{/if}}
   <p>{{localize "RPGUP.ImportHint"}}</p>
+  <p class="rpgup-warning">{{localize "RPGUP.MapFeaturesPending"}}</p>
   {{#if detailName}}<article class="rpgup-detail"><h3>{{detailName}}</h3>{{#if preview}}<img src="{{preview}}" alt="{{detailName}}">{{/if}}<pre>{{detailText}}</pre></article>{{/if}}
   {{/if}}
   {{#if hasResult}}<h3>{{localize "RPGUP.Result"}}</h3><pre>{{resultText}}</pre>{{/if}}

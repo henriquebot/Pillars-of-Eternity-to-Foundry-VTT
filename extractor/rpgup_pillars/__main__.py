@@ -29,6 +29,9 @@ def main(argv: list[str] | None = None) -> int:
     convert.add_argument("--output", type=Path, required=True)
     convert.add_argument("--language", default="pt-BR")
     convert.add_argument("--max-files", type=int, default=100_000)
+    convert.add_argument("--source-detail", choices=("inline", "sidecar"), default="inline")
+    convert.add_argument("--audit-dir", type=Path, help="Cópias exatas de XML para --source-detail sidecar, fora do jogo")
+    convert.add_argument("--all-languages", action="store_true", help="Extrair todos os idiomas encontrados em vez de inglês+solicitado")
     check = commands.add_parser("validate", help="Validar estrutura mínima e IDs de um arquivo IR")
     check.add_argument("path", type=Path)
     package = commands.add_parser("package", help="Criar pacote compacto filtrado para importação no Foundry")
@@ -70,7 +73,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(json.dumps(payload, ensure_ascii=False, indent=2))
             return 0
         if args.command == "extract":
-            payload = extract(args.root, language=args.language, max_files=args.max_files)
+            payload = extract(args.root, language=args.language, max_files=args.max_files,
+                              source_detail=args.source_detail, audit_dir=args.audit_dir,
+                              all_languages=args.all_languages)
             errors = validate(payload)
             if errors:
                 raise SourceError("Generated IR failed validation: " + "; ".join(errors))

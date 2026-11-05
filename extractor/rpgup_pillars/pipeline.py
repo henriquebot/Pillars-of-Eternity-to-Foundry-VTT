@@ -59,7 +59,36 @@ def _text_metadata(path: Path, data_root: Path) -> tuple[str, str, str] | None:
     return None
 
 
-def extract(root: Path, *, language: str = "pt-BR", max_files: int = 100_000) -> dict:
+def _snapshot(target: Path, raw: bytes, *, audit_root: Path, game_root: Path) -> str:
+    """Keep exact XML bytes outside the game, without redundant JSON source trees."""
+    resolved = target.resolve()
+    if resolved.is_relative_to(game_root.resolve()) or not resolved.is_relative_to(audit_root.resolve()):
+        raise SourceError("Source snapshots must stay in the audit directory outside the game")
+    if target.exists() and (is_link(target) or not target.is_file()):
+        raise SourceError("Source snapshot target must be a regular file")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists():
+        if target.read_bytes() == raw:
+            return str(resolved)
+        backup = target.with_name(target.name + f".{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}.bak")
+        shutil.copy2(target, backup)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile("wb", dir=target.parent, prefix=".rpgup-", suffix=".tmp", delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, target)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
+    return str(resolved)
+
+
+def extract(root: Path, *, language: str = "pt-BR", max_files: int = 100_000,
+            source_detail: str = "inline", audit_dir: Path | None = None,
+            all_languages: bool = False) -> dict:
     if is_link(root):
         raise SourceError("Installation root must not be a link or junction")
     root = root.resolve()
@@ -67,6 +96,13 @@ def extract(root: Path, *, language: str = "pt-BR", max_files: int = 100_000) ->
     if not data_root.is_dir() or is_link(data_root):
         raise SourceError(f"No readable {DATA_FOLDER} directory at {root}")
     game_root = data_root.parent
+    if source_detail not in {"inline", "sidecar"}:
+        raise SourceError("source_detail must be inline or sidecar")
+    if source_detail == "sidecar":
+        if audit_dir is None:
+            raise SourceError("Sidecar source detail requires an audit directory")
+        if audit_dir.resolve().is_relative_to(game_root):
+            raise SourceError("Audit directory must be outside the original game installation")
     synthetic = (game_root / ".rpgup-synthetic").is_file()
     timestamp = now()
     diagnostics = []
@@ -74,6 +110,14 @@ def extract(root: Path, *, language: str = "pt-BR", max_files: int = 100_000) ->
     tables: dict[tuple[str, str, str], dict] = {}
     table_records = []
     duplicates: dict[str, list[str]] = {}
+    requested_languages = list(dict.fromkeys(("en", _locale(language))))
+    available_languages = sorted({metadata[1] for p in paths if p.suffix.lower() == ".stringtable"
+                                  if (metadata := _text_metadata(p, data_root)) is not None})
+
+    def snapshot(path: Path, raw: bytes, provenance: dict):
+        if source_detail == "sidecar":
+            provenance["snapshotPath"] = _snapshot(audit_dir / path.relative_to(data_root), raw,
+                                                    audit_root=audit_dir, game_root=game_root)
 
     def issue(severity: str, code: str, path: Path | str, message: str):
         diagnostics.append({"severity": severity, "code": code, "path": str(path), "message": message})
@@ -81,14 +125,17 @@ def extract(root: Path, *, language: str = "pt-BR", max_files: int = 100_000) ->
     for path in paths:
         if path.suffix.lower() != ".stringtable":
             continue
+        metadata = _text_metadata(path, data_root)
+        if not all_languages and metadata and metadata[1] not in requested_languages:
+            continue
         try:
             raw = _read(path)
             parsed = parse_stringtable(raw)
             relative = path.relative_to(data_root).as_posix()
             provenance = _provenance(path, relative, raw, timestamp, synthetic)
+            snapshot(path, raw, provenance)
             record = {"id": stable_id("stringtable", relative), "path": relative,
                       "provenance": provenance, **parsed}
-            metadata = _text_metadata(path, data_root)
             if metadata:
                 package, locale, table_path = metadata
                 record.update({"package": package, "language": locale, "tablePath": table_path})
@@ -119,7 +166,8 @@ def extract(root: Path, *, language: str = "pt-BR", max_files: int = 100_000) ->
         return result
 
     entities_by_key: dict[tuple[str, str], dict] = {}
-    requested_languages = list(dict.fromkeys(("en", _locale(language))))
+    if all_languages:
+        requested_languages = list(dict.fromkeys((*requested_languages, *available_languages)))
     narrative_paths = sorted((p for p in paths if p.suffix.lower() in {".quest", ".conversation"}),
                              key=lambda p: (PACKAGES.index(p.relative_to(data_root).parts[0])
                                             if p.relative_to(data_root).parts[0] in PACKAGES else -1, str(p)))
@@ -127,7 +175,7 @@ def extract(root: Path, *, language: str = "pt-BR", max_files: int = 100_000) ->
         kind = "quest" if path.suffix.lower() == ".quest" else "dialogue"
         try:
             raw = _read(path)
-            parsed = parse_flow(raw, quest=kind == "quest")
+            parsed = parse_flow(raw, quest=kind == "quest", preserve_source=source_detail == "inline")
             relative = path.relative_to(data_root)
             source_relative = Path(*relative.parts[1:]) if relative.parts[0] in PACKAGES else relative
             source_id = source_relative.with_suffix("").as_posix()
@@ -144,7 +192,8 @@ def extract(root: Path, *, language: str = "pt-BR", max_files: int = 100_000) ->
             for node in parsed["nodes"]:
                 node["texts"] = {locale: entries[node["id"]] for locale, entries in localized.items()
                                  if node["id"] in entries}
-                if not node["texts"] and node["type"] in {"TalkNode", "PlayerResponseNode"}:
+                # PoE1's conversation root (ID 0) normally routes flow without a text entry.
+                if not node["texts"] and node["id"] != 0 and node["type"] in {"TalkNode", "PlayerResponseNode"}:
                     parsed["warnings"].append(f"Missing stringtable text for node {node['id']}")
             if not any(localized.values()):
                 parsed["warnings"].append("No associated stringtable found")
@@ -166,6 +215,7 @@ def extract(root: Path, *, language: str = "pt-BR", max_files: int = 100_000) ->
                       "name": names, "provenance": _provenance(path, source_id, raw, timestamp, synthetic),
                       "data": {**parsed, "translation": {"requested": language,
                                 "policy": "fallback content explicitly tagged with actual language"}}}
+            snapshot(path, raw, entity["provenance"])
             key = (kind, source_id.lower())
             if key in entities_by_key:
                 issue("warning", "narrative-overlay", path,
@@ -191,6 +241,8 @@ def extract(root: Path, *, language: str = "pt-BR", max_files: int = 100_000) ->
     return {"schemaVersion": "1.0.0", "id": "rpgup-pillars-campaign",
             "source": {"game": "pillars-of-eternity", "root": str(game_root), "language": language,
                        "extractedAt": timestamp, "extractorVersion": __version__, "synthetic": synthetic,
+                       "sourceDetail": source_detail, "auditDirectory": str(audit_dir.resolve()) if audit_dir else None,
+                       "availableLanguages": available_languages, "allLanguagesRequested": all_languages,
                        "packages": [p for p in PACKAGES if (data_root / p).is_dir()],
                        "tables": table_records},
             "entities": entities, "diagnostics": diagnostics,
@@ -272,7 +324,7 @@ def write_json(target: Path, payload: dict, *, forbidden_roots: tuple[Path, ...]
         shutil.copy2(target, backup)
     temporary = None
     try:
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=target.parent,
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="\n", dir=target.parent,
                                          prefix=".rpgup-", suffix=".tmp", delete=False) as stream:
             temporary = Path(stream.name)
             json.dump(payload, stream, ensure_ascii=False, indent=2, allow_nan=False)

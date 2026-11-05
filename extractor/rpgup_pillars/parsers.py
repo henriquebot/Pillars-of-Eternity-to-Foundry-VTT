@@ -106,20 +106,23 @@ def parse_stringtable(raw: bytes) -> dict:
     return {"name": value(root, "Name"), "entries": entries, "warnings": warnings}
 
 
-def _scripts(node: ET.Element) -> list[dict]:
+def _scripts(node: ET.Element, *, preserve_source: bool = True) -> list[dict]:
     calls = []
     for tag, phase in (("OnEnterScripts", "enter"), ("OnExitScripts", "exit"), ("OnUpdateScripts", "update")):
         parent = child(node, tag)
         for call in list(parent) if parent is not None else []:
             data = child(call, "Data")
             if data is not None:
-                calls.append({"phase": phase, "function": value(data, "FullName"),
+                call_data = {"phase": phase, "function": value(data, "FullName"),
                               "parameters": [content(e) for e in children(child(data, "Parameters"), "string")],
-                              "executable": False, "source": tree_data(call)})
+                              "executable": False}
+                if preserve_source:
+                    call_data["source"] = tree_data(call)
+                calls.append(call_data)
     return calls
 
 
-def parse_flow(raw: bytes, *, quest: bool = False) -> dict:
+def parse_flow(raw: bytes, *, quest: bool = False, preserve_source: bool = True) -> dict:
     root = safe_xml(raw)
     expected = "QuestData" if quest else "ConversationData"
     if local_tag(root.tag) != expected:
@@ -127,7 +130,8 @@ def parse_flow(raw: bytes, *, quest: bool = False) -> dict:
     nodes = []
     seen = set()
     warnings = []
-    known = ({"QuestNode", "ObjectiveNode", "GlobalQuestNode", "EndStateNode"} if quest else
+    # BranchCompleteNode is also present in the inspected PoE1 game build.
+    known = ({"QuestNode", "ObjectiveNode", "GlobalQuestNode", "EndStateNode", "BranchCompleteNode"} if quest else
              {"TalkNode", "PlayerResponseNode", "ScriptNode", "BankNode", "TriggerConversationNode"})
     for node in children(child(root, "Nodes"), "FlowChartNode"):
         source_id = integer(value(node, "NodeID"), "NodeID")
@@ -139,17 +143,23 @@ def parse_flow(raw: bytes, *, quest: bool = False) -> dict:
             warnings.append(f"Unknown node type {node_type!r}: preserved for review")
         links = []
         for link in children(child(node, "Links"), "FlowChartLink"):
-            links.append({"from": integer(value(link, "FromNodeID"), "FromNodeID"),
+            link_data = {"from": integer(value(link, "FromNodeID"), "FromNodeID"),
                           "to": integer(value(link, "ToNodeID"), "ToNodeID"),
                           "type": link.attrib.get(XSI_TYPE, ""),
                           "metadata": [tree_data(e) for e in link
-                                       if local_tag(e.tag) not in {"FromNodeID", "ToNodeID"}],
-                          "source": tree_data(link)})
-        nodes.append({"id": source_id, "type": node_type, "isPlayerChoice": node_type == "PlayerResponseNode",
+                                       if local_tag(e.tag) not in {"FromNodeID", "ToNodeID"}]}
+            if preserve_source:
+                link_data["source"] = tree_data(link)
+            links.append(link_data)
+        node_data = {"id": source_id, "type": node_type, "isRoot": source_id == 0,
+                      "isPlayerChoice": node_type == "PlayerResponseNode",
                       "speaker": value(node, "SpeakerGuid"), "listener": value(node, "ListenerGuid"),
                       "links": links, "conditions": tree_data(child(node, "Conditionals"))
                       if child(node, "Conditionals") is not None else None,
-                      "scripts": _scripts(node), "source": tree_data(node)})
+                      "scripts": _scripts(node, preserve_source=preserve_source)}
+        if preserve_source:
+            node_data["source"] = tree_data(node)
+        nodes.append(node_data)
     for node in nodes:
         for link in node["links"]:
             if link["to"] not in seen:
@@ -157,8 +167,11 @@ def parse_flow(raw: bytes, *, quest: bool = False) -> dict:
             if link["from"] != node["id"]:
                 warnings.append(f"Node {node['id']} has mismatching link source {link['from']}")
     # The full tree preserves unsupported fields and quest event metadata. No original scripts execute.
-    return {"nodes": nodes, "warnings": warnings, "sourceTree": tree_data(root),
-            "semantics": "partial-structural-only", "automation": "manual-only"}
+    result = {"nodes": nodes, "warnings": warnings,
+              "semantics": "partial-structural-only", "automation": "manual-only"}
+    if preserve_source:
+        result["sourceTree"] = tree_data(root)
+    return result
 
 
 def quest_text(entries: dict[int, dict], nodes: list[dict]) -> dict:

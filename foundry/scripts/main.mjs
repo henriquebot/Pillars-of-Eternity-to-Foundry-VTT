@@ -1,7 +1,10 @@
 import {MODULE_ID, QUEST_STATES, assetPath, displayName, parseBundle, publicDiagnostic, stableId} from "./model.mjs";
 import {applyPlan, persistBackup, planImport, readBackups, requireGM} from "./importer.mjs";
 import {prepareMappedItem} from "./dnd-adapter.mjs";
+import {planScenePins, applyScenePins} from "./scene-pins.mjs";
+import {planGlimpsePins, applyGlimpsePins} from "./glimpse-adapter.mjs";
 import {renderNarrative} from "./narrative.mjs";
+import {selectSubsystemIds, summarizeImportPreview} from "./import-preview.mjs";
 
 const {ApplicationV2, HandlebarsApplicationMixin} = foundry.applications.api;
 const tr = key => game.i18n.localize(`RPGUP.${key}`);
@@ -10,6 +13,15 @@ let busy = false, manager;
 function integrationConflicts() {
   const active = id => Boolean(game.modules.get(id)?.active);
   return [["dnd5e-combat", "midi-qol"], ["darsh-loot", "item-piles"]].filter(pair => pair.every(active)).map(pair => `${pair.join(" + ")}: ${tr("DeclaredConflict")}`);
+}
+function verifyAsset(path) {
+  return new Promise(resolve => {
+    const image = new Image();
+    const timer = setTimeout(() => {image.src = ""; resolve(false);}, 15000);
+    image.onload = () => {clearTimeout(timer); resolve(true);};
+    image.onerror = () => {clearTimeout(timer); resolve(false);};
+    image.src = `${foundry.utils.getRoute(path)}?rpgup=${Date.now()}`;
+  });
 }
 
 export class PillarsCampaignManager extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -22,7 +34,8 @@ export class PillarsCampaignManager extends HandlebarsApplicationMixin(Applicati
       load: this.loadBundle,
       filter: this.filterRecords,
       inspect: this.inspectRecord,
-      import: this.importRecords,
+      preview: this.previewImport,
+      applyPreview: this.applyPreparedImport,
       diagnostics: this.exportDiagnostics,
       backup: this.exportBackup,
       storedBackups: this.exportStoredBackups,
@@ -38,6 +51,8 @@ export class PillarsCampaignManager extends HandlebarsApplicationMixin(Applicati
   result = null;
   lastBackup = null;
   selected = new Set();
+  pendingImport = null;
+  subsystems = {maps: true, journals: true, pins: true};
 
   async _prepareContext(options) {
     requireGM();
@@ -50,7 +65,20 @@ export class PillarsCampaignManager extends HandlebarsApplicationMixin(Applicati
     const detail = this.inspected !== null ? entities[this.inspected] : null;
     let preview = null;
     if (detail?.kind === "map") { try { preview = assetPath(detail.data.image); } catch { /* Missing image is displayed in diagnostics during preview. */ } }
-    return {...context, loaded: Boolean(this.bundle), rows, query: this.query, bundleName: this.bundle?.id, total: entities.length, filtered: filtered.length, truncated: filtered.length > 200, detailName: detail ? displayName(detail, game.i18n.lang) : "", detailText: detail ? renderNarrative(detail, game.i18n.lang, tr) : "", preview, kinds: [...new Set(entities.map(entity => entity.kind))].sort().map(kind => ({value: kind, selected: kind === this.kind})), regions: [...new Set(entities.map(entity => entity.data.region).filter(Boolean))].sort().map(region => ({value: region, selected: region === this.region})), hasResult: Boolean(this.result), resultText: this.result ? JSON.stringify(publicDiagnostic(this.result), null, 2) : "", hasBackup: Boolean(this.lastBackup), environment: `${game.version} / ${game.system.id} ${game.system.version}`, conflicts: integrationConflicts(), integrations: ["dnd5e-combat", "darsh-loot", "midi-qol", "dae", "item-piles", "monks-active-tiles", "isometric-perspective", "cat", "chris-premades"].map(id => ({id, active: Boolean(game.modules.get(id)?.active), validation: tr("Unverified")}))};
+    return {
+      ...context, loaded: Boolean(this.bundle), rows, query: this.query, bundleName: this.bundle?.id,
+      total: entities.length, filtered: filtered.length, truncated: filtered.length > 200,
+      subsystems: Object.entries(this.subsystems).map(([key, checked]) => ({key, checked, label: tr(`Subsystem${key[0].toUpperCase()}${key.slice(1)}`)})),
+      detailName: detail ? displayName(detail, game.i18n.lang) : "",
+      detailText: detail ? renderNarrative(detail, game.i18n.lang, tr) : "", preview,
+      kinds: [...new Set(entities.map(entity => entity.kind))].sort().map(kind => ({value: kind, selected: kind === this.kind})),
+      regions: [...new Set(entities.map(entity => entity.data.region).filter(Boolean))].sort().map(region => ({value: region, selected: region === this.region})),
+      hasResult: Boolean(this.result), resultText: this.result ? JSON.stringify(publicDiagnostic(this.result), null, 2) : "",
+      hasPending: Boolean(this.pendingImport), pendingText: this.pendingImport ? JSON.stringify(this.pendingImport.summary, null, 2) : "",
+      hasBackup: Boolean(this.lastBackup), environment: `${game.version} / ${game.system.id} ${game.system.version}`,
+      conflicts: integrationConflicts(),
+      integrations: ["dnd5e-combat", "darsh-loot", "midi-qol", "dae", "item-piles", "monks-active-tiles", "isometric-perspective", "cat", "chris-premades"].map(id => ({id, active: Boolean(game.modules.get(id)?.active), validation: tr("Unverified")}))
+    };
   }
 
   static async loadBundle() {
@@ -64,6 +92,7 @@ export class PillarsCampaignManager extends HandlebarsApplicationMixin(Applicati
       this.selected.clear();
       this.query = this.kind = this.region = "";
       this.result = null;
+      this.pendingImport = null;
       await this.render({force: true});
     } catch (error) { ui.notifications.error(error.message); }
   }
@@ -88,15 +117,81 @@ export class PillarsCampaignManager extends HandlebarsApplicationMixin(Applicati
     this.inspected = Number(target.dataset.index);
     await this.render({force: true});
   }
-  static async importRecords() {
-    if (busy) return ui.notifications.warn(tr("Busy"));
+  readSubsystems() {
+    this.subsystems = Object.fromEntries(["maps", "journals", "pins"].map(key => [key, Boolean(this.element.querySelector(`[data-subsystem="${key}"]`)?.checked)]));
+    return {...this.subsystems};
+  }
+  async buildImportPreview(ids, scopes) {
+    const chosen = selectSubsystemIds(this.bundle.entities, ids, scopes);
+    if (!chosen.length) throw new Error(tr("NoSubsystemSelected"));
+    const entities = new Map(this.bundle.entities.map(entity => [entity.id, entity]));
+    const ordinary = chosen.filter(id => entities.get(id)?.kind !== "pin");
+    const pinIds = chosen.filter(id => entities.get(id)?.kind === "pin");
+    const ordinaryPlan = ordinary.length ? await planImport(this.bundle, ordinary) : null;
+    const glimpse = game.modules.get("glimpse-map-notes");
+    const glimpseApi = glimpse?.active ? glimpse.api : null;
+    if (glimpse?.active && (!glimpseApi?.locations?.plan || !glimpseApi?.locations?.apply || !glimpseApi?.locations?.export)) throw new Error("Glimpse está ativo, mas locations.plan/apply/export ainda não está pronto.");
+    const pinPlan = pinIds.length
+      ? glimpseApi?.locations?.plan && glimpseApi?.locations?.apply && glimpseApi?.locations?.export
+        ? await planGlimpsePins(this.bundle, pinIds, {glimpseApi, assetExists: path => foundry.canvas.srcExists(path)})
+        : await planScenePins(this.bundle, pinIds)
+      : null;
+    const {summary, deferredPinIds} = summarizeImportPreview({bundleId: this.bundle.id, worldId: game.world.id, selectedIds: chosen, scopes, entities: this.bundle.entities, ordinaryPlan, pinPlan});
+    const assetChecks = await Promise.all((ordinaryPlan?.actions ?? []).filter(action => action.descriptor.type === "Scene" && action.operation !== "unchanged").map(async action => ({id: action.descriptor.entityId, available: await verifyAsset(action.descriptor.fields["level.background.src"])})));
+    summary.assets = assetChecks;
+    return {requestedIds: [...ids], ids: chosen, pinIds, deferredPinIds, scopes, ordinaryPlan, pinPlan, assetChecks, summary};
+  }
+  static async previewImport() {
     try {
       requireGM();
       if (!this.bundle) throw new Error(tr("ChooseFile"));
+      this.saveSelection();
+      const scopes = this.readSubsystems();
+      const ids = this.bundle.entities.filter(entity => this.selected.has(entity.id)).map(entity => entity.id);
+      if (!ids.length) throw new Error(tr("SelectRecords"));
+      this.pendingImport = await this.buildImportPreview(ids, scopes);
+      this.result = null;
+      await this.render({force: true});
+    } catch (error) { ui.notifications.error(error.message); }
+  }
+  static async applyPreparedImport() {
+    if (busy) return ui.notifications.warn(tr("Busy"));
+    try {
+      requireGM();
+      if (!this.bundle || !this.pendingImport) throw new Error(tr("PreviewRequired"));
       busy = true;
       this.saveSelection();
-      const plan = await planImport(this.bundle, [...this.selected]);
-      this.result = await applyPlan(plan, {backup: async payload => { await persistBackup(payload); this.lastBackup = payload; foundry.utils.saveDataToFile(JSON.stringify(payload, null, 2), "application/json", `rpgup-backup-${game.world.id}-${Date.now()}.json`); }, verifyAsset: path => new Promise(resolve => {const image = new Image(); const timer = setTimeout(() => {image.src = ""; resolve(false);}, 15000); image.onload = () => {clearTimeout(timer); resolve(true);}; image.onerror = () => {clearTimeout(timer); resolve(false);}; image.src = foundry.utils.getRoute(path);})});
+      const currentIds = this.bundle.entities.filter(entity => this.selected.has(entity.id)).map(entity => entity.id);
+      const currentScopes = this.readSubsystems();
+      if (JSON.stringify(currentIds) !== JSON.stringify(this.pendingImport.requestedIds) || JSON.stringify(currentScopes) !== JSON.stringify(this.pendingImport.scopes)) {
+        throw new Error(tr("PreviewStale"));
+      }
+      const fresh = await this.buildImportPreview(currentIds, currentScopes);
+      if (JSON.stringify(fresh.summary) !== JSON.stringify(this.pendingImport.summary)) {
+        this.pendingImport = fresh;
+        await this.render({force: true});
+        throw new Error(tr("PreviewChanged"));
+      }
+      const backup = async payload => {
+        await persistBackup(payload);
+        this.lastBackup = payload;
+        foundry.utils.saveDataToFile(JSON.stringify(payload, null, 2), "application/json", `rpgup-backup-${game.world.id}-${Date.now()}.json`);
+      };
+      this.result = {created: [], updated: [], unchanged: [], failed: [], skipped: [], conflicts: []};
+      if (fresh.ordinaryPlan) {
+        this.result = await applyPlan(fresh.ordinaryPlan, {backup, verifyAsset});
+      }
+      if (!this.result.failed.length && fresh.pinPlan) {
+        const pinPlan = fresh.deferredPinIds.length
+          ? fresh.pinPlan.kind === "glimpse"
+            ? await planGlimpsePins(this.bundle, fresh.pinIds, {assetExists: path => foundry.canvas.srcExists(path)})
+            : await planScenePins(this.bundle, fresh.pinIds)
+          : fresh.pinPlan;
+        this.result.pinNotes = pinPlan.kind === "glimpse"
+          ? await applyGlimpsePins(pinPlan, {backup, assetExists: path => foundry.canvas.srcExists(path)})
+          : await applyScenePins(pinPlan, {backup});
+      }
+      this.pendingImport = null;
       ui.notifications.info(tr("ImportFinished"));
       await this.render({force: true});
     } catch (error) { ui.notifications.error(error.message); }
@@ -104,7 +199,7 @@ export class PillarsCampaignManager extends HandlebarsApplicationMixin(Applicati
   }
   static exportDiagnostics() {
     requireGM();
-    const diagnostic = {module: MODULE_ID, moduleVersion: "0.1.0", foundry: game.version, system: {id: game.system.id, version: game.system.version}, worldId: game.world.id, liveValidation: "pending", integrationConflicts: integrationConflicts(), ...(this.result ? publicDiagnostic(this.result) : {})};
+    const diagnostic = {module: MODULE_ID, moduleVersion: game.modules.get(MODULE_ID)?.version ?? "unknown", foundry: game.version, system: {id: game.system.id, version: game.system.version}, worldId: game.world.id, liveValidation: "partial", integrationConflicts: integrationConflicts(), ...(this.result ? publicDiagnostic(this.result) : {})};
     foundry.utils.saveDataToFile(JSON.stringify(diagnostic, null, 2), "application/json", "rpgup-diagnostics.json");
   }
   static exportBackup() {

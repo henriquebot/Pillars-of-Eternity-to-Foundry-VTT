@@ -1,49 +1,51 @@
 {
-  "id": "rpgup-pillars-importer",
-  "title": "RPG UP — Pillars Campaign Manager",
-  "description": "Importador local e revisável de recursos de Pillars of Eternity para Foundry V14 e D&D 5e 6.x. Projeto em desenvolvimento; não inclui assets comerciais.",
-  "version": "0.1.0",
-  "authors": [
-    {
-      "name": "RPG UP"
-    }
-  ],
-  "compatibility": {
-    "minimum": "14",
-    "maximum": "14"
-  },
-  "relationships": {
-    "systems": [
-      {
-        "id": "dnd5e",
-        "type": "system",
-        "compatibility": {
-          "minimum": "6.0.0",
-          "maximum": "6.0.99"
-        }
-      }
-    ]
-  },
-  "esmodules": [
-    "scripts/main.mjs"
-  ],
-  "styles": [
-    "styles/manager.css"
-  ],
-  "languages": [
-    {
-      "lang": "pt-BR",
-      "name": "Português (Brasil)",
-      "path": "lang/pt-BR.json"
-    },
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "lang/en.json"
-    }
-  ],
-  "packs": [],
-  "url": "https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT",
-  "manifest": "https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.json",
-  "download": "https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.zip"
+    "id":  "rpgup-pillars-importer",
+    "title":  "RPG UP â€” Pillars Campaign Manager",
+    "description":  "ImportaÃ§Ã£o local e revisÃ¡vel de mapas, pins Glimpse e recursos de Pillars of Eternity. VersÃ£o de desenvolvimento.",
+    "version":  "0.1.6",
+    "authors":  [
+                    {
+                        "name":  "RPG UP"
+                    }
+                ],
+    "compatibility":  {
+                          "minimum":  "14",
+                          "maximum":  "14"
+                      },
+    "relationships":  {
+                          "systems":  [
+                                          {
+                                              "id":  "dnd5e",
+                                              "type":  "system",
+                                              "compatibility":  {
+                                                                    "minimum":  "6.0.0",
+                                                                    "maximum":  "6.0.99"
+                                                                }
+                                          }
+                                      ]
+                      },
+    "esmodules":  [
+                      "scripts/main.mjs"
+                  ],
+    "styles":  [
+                   "styles/manager.css"
+               ],
+    "languages":  [
+                      {
+                          "lang":  "pt-BR",
+                          "name":  "PortuguÃªs (Brasil)",
+                          "path":  "lang/pt-BR.json"
+                      },
+                      {
+                          "lang":  "en",
+                          "name":  "English",
+                          "path":  "lang/en.json"
+                      }
+                  ],
+    "packs":  [
+
+              ],
+    "url":  "https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT",
+    "manifest":  "https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.json",
+    "download":  "https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.zip"
 }

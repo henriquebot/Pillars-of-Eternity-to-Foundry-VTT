@@ -30,6 +30,7 @@ export function validateBundle(bundle) {
   inspect(bundle);
   if (!plain(bundle) || bundle.schemaVersion !== "1.0.0" || typeof bundle.id !== "string" || !bundle.id.trim() || bundle.id.length > 256) throw new Error("IR inválido: schemaVersion 1.0.0 e id de até 256 caracteres são obrigatórios.");
   if (!plain(bundle.source) || !Array.isArray(bundle.entities) || bundle.entities.length > 50000) throw new Error("IR inválido: source e entities são obrigatórios (máximo 50.000 entidades).");
+  if (bundle.targetFolder !== undefined && (!plain(bundle.targetFolder) || bundle.targetFolder.type !== "Scene" || typeof bundle.targetFolder.name !== "string" || !bundle.targetFolder.name.trim() || bundle.targetFolder.name.length > 100)) throw new Error("Pasta de destino inválida: informe nome e tipo Scene.");
   const ids = new Set();
   for (const entity of bundle.entities) {
     if (!plain(entity) || typeof entity.id !== "string" || !entity.id || entity.id.length > 256 || !KINDS.has(entity.kind) || !plain(entity.data) || !plain(entity.provenance) || !plain(entity.name)) throw new Error("Entidade inválida: id, kind, name, data e provenance obrigatórios.");
@@ -100,6 +101,28 @@ export function mergeManaged(baseline, current, incoming) {
   return {patch, conflicts, baseline: nextBaseline};
 }
 
+function sceneFeatureInventorySummary(source) {
+  if (!plain(source) || !/^[0-9a-f]{64}$/i.test(source.sourceHash ?? "")) throw new Error("Inventário Unity de cena inválido: hash de origem ausente.");
+  const count = (section, key) => {
+    const value = source[section]?.[key];
+    if (!Number.isSafeInteger(value) || value < 0 || value > 500000) throw new Error(`Inventário Unity de cena inválido: ${section}.${key}.`);
+    return value;
+  };
+  const flag = (section, key) => {
+    const value = source[section]?.[key];
+    if (typeof value !== "boolean") throw new Error(`Inventário Unity de cena inválido: ${section}.${key}.`);
+    return value;
+  };
+  return {
+    sourceHash: source.sourceHash.toLowerCase(),
+    lights: {identified: count("lights", "identified"), converted: count("lights", "converted"), status: "pending-review"},
+    collisions: {identified: count("collisions", "identified"), wallSegmentsConverted: count("collisions", "wallSegmentsConverted"), navigationDecoded: flag("collisions", "navigationDecoded"), status: "pending-review"},
+    triggers: {identified: count("triggers", "identified"), behavioursInterpreted: count("triggers", "behavioursInterpreted"), customFieldsParsed: flag("triggers", "customFieldsParsed"), status: "pending-review"},
+    ambientSettings: {identified: count("ambientSettings", "identified"), converted: flag("ambientSettings", "converted")},
+    redistribution: false
+  };
+}
+
 export async function describeEntity(bundle, entity, language = "pt-BR") {
   const id = await stableId(bundle.id, entity.id);
   const name = displayName(entity, language);
@@ -109,9 +132,22 @@ export async function describeEntity(bundle, entity, language = "pt-BR") {
     if (![width, height].every(v => Number.isInteger(v) && v > 0 && v <= 100000)) return {entityId: entity.id, supported: false, reason: "Dimensões de mapa ausentes ou inválidas."};
     let image;
     try { image = assetPath(entity.data.image); } catch (error) { return {entityId: entity.id, supported: false, reason: error.message}; }
+    const mapKnowledge = entity.data.mapKnowledge ?? "requires-exploration";
+    if (!["known", "requires-exploration"].includes(mapKnowledge)) return {entityId: entity.id, supported: false, reason: "mapKnowledge deve ser 'known' ou 'requires-exploration'."};
     const grid = entity.data.grid ?? {};
     if ((grid.size !== undefined && (!Number.isFinite(grid.size) || grid.size < 50 || grid.size > 1000)) || (grid.distance !== undefined && (!Number.isFinite(grid.distance) || grid.distance <= 0)) || (grid.type !== undefined && ![0, 1].includes(grid.type)) || (grid.units !== undefined && typeof grid.units !== "string")) return {entityId: entity.id, supported: false, reason: "Configuração de grade inválida (tipos aceitos: sem grade ou quadrada)."};
-    return {entityId: entity.id, supported: true, type: "Scene", id, meta, fields: {name, width, height, "grid.type": grid.type ?? 0, "grid.size": grid.size ?? 100, "grid.distance": grid.distance ?? 5, "grid.units": grid.units ?? "ft", "level.background.src": image}, levelId: await stableId(bundle.id, entity.id, "level"), warning: "Cena não validada para combate: conferir imagem, calibração, movimento, alcance, visão e paredes."};
+    const sourceFeatureInventory = entity.data.sourceFeatureInventory;
+    const sceneMeta = sourceFeatureInventory !== undefined
+      ? {...meta, sourceFeatureInventory: sceneFeatureInventorySummary(sourceFeatureInventory)}
+      : meta;
+    const fields = {name, width, height, "grid.type": grid.type ?? 0, "grid.size": grid.size ?? 100, "grid.distance": grid.distance ?? 5, "grid.units": grid.units ?? "ft", "level.background.src": image};
+    if (bundle.targetFolder) fields.folder = await stableId(bundle.id, "target-folder", "folder");
+    if (entity.data.sort !== undefined) {
+      if (!Number.isSafeInteger(entity.data.sort) || entity.data.sort < 0) throw new Error(`Ordenação da cena inválida: ${entity.id}`);
+      fields.sort = entity.data.sort;
+    }
+    if (entity.data.sourceAsset) sceneMeta.sourceAsset = copy(entity.data.sourceAsset);
+    return {entityId: entity.id, supported: true, type: "Scene", id, meta: sceneMeta, mapKnowledge, fields, levelId: await stableId(bundle.id, entity.id, "level"), warning: "Cena não validada para combate: conferir imagem, cobertura, orientação, calibração, movimento, alcance, visão e paredes."};
   }
   if (["quest", "dialogue", "lore", "pin"].includes(entity.kind)) {
     if (typeof entity.data.publicText !== "string" || !entity.data.publicText.trim()) return {entityId: entity.id, supported: false, reason: "Texto público não definido. Conteúdo privado permanece somente no painel do mestre."};
@@ -123,5 +159,5 @@ export async function describeEntity(bundle, entity, language = "pt-BR") {
 
 export function publicDiagnostic(result) {
   // Diagnostic files never include package prose or original machine paths.
-  return {created: result.created ?? [], updated: result.updated ?? [], unchanged: result.unchanged ?? [], failed: result.failed ?? [], skipped: result.skipped ?? [], conflicts: result.conflicts ?? [], validation: "Foundry real pendente; cenas não aprovadas para combate."};
+  return {created: result.created ?? [], updated: result.updated ?? [], unchanged: result.unchanged ?? [], failed: result.failed ?? [], skipped: result.skipped ?? [], conflicts: result.conflicts ?? [], pinNotes: result.pinNotes, validation: "Validação parcial no Foundry; cenas não aprovadas para combate."};
 }

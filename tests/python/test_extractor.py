@@ -182,6 +182,36 @@ class InstallationTests(unittest.TestCase):
         self.assertTrue(first["source"]["synthetic"])
         self.assertEqual({e["kind"] for e in first["entities"]}, {"quest", "dialogue"})
 
+    def test_sidecar_source_snapshots_are_exact_and_external(self):
+        audit = self.parent / "audit"
+        result = extract(self.root, source_detail="sidecar", audit_dir=audit)
+        self.assertTrue(all("sourceTree" not in entity["data"] for entity in result["entities"]))
+        for entity in result["entities"]:
+            original = Path(entity["provenance"]["path"])
+            snapshot = Path(entity["provenance"]["snapshotPath"])
+            self.assertEqual(snapshot.read_bytes(), original.read_bytes())
+            self.assertTrue(snapshot.resolve().is_relative_to(audit.resolve()))
+        self.assertFalse(any(p.suffix == ".tmp" for p in audit.rglob("*")))
+
+    def test_sidecar_cannot_write_into_source_and_requires_audit_dir(self):
+        with self.assertRaisesRegex(SourceError, "outside"):
+            extract(self.root, source_detail="sidecar", audit_dir=self.root / "audit")
+        with self.assertRaisesRegex(SourceError, "requires"):
+            extract(self.root, source_detail="sidecar")
+        self.assertFalse((self.root / "audit").exists())
+
+    def test_language_selection_can_include_all_explicitly(self):
+        foreign = self.root / DATA_FOLDER / "data/localized/de/text/conversations/test/branch.stringtable"
+        foreign.parent.mkdir(parents=True)
+        foreign.write_bytes((FIXTURES / "branch.stringtable").read_bytes())
+        selected = extract(self.root)
+        self.assertIn("de", selected["source"]["availableLanguages"])
+        self.assertFalse(any(table.get("language") == "de" for table in selected["source"]["tables"]))
+        complete = extract(self.root, all_languages=True)
+        self.assertTrue(any(table.get("language") == "de" for table in complete["source"]["tables"]))
+        dialogue = next(entity for entity in complete["entities"] if entity["kind"] == "dialogue")
+        self.assertIn("de", dialogue["data"]["nodes"][0]["texts"])
+
     def test_dialogue_text_and_quest_reference_resolve(self):
         result = extract(self.root)
         dialogue = next(e for e in result["entities"] if e["kind"] == "dialogue")
@@ -196,6 +226,14 @@ class InstallationTests(unittest.TestCase):
         self.assertTrue(text["translationMissing"])
         self.assertEqual(text["language"], "en")
         self.assertNotIn("pt-BR", dialogue["name"])
+
+    def test_conversation_root_without_text_is_not_reported_missing(self):
+        table_path = self.root / DATA_FOLDER / "data/localized/en/text/conversations/test/branch.stringtable"
+        table_path.write_bytes(b'<StringTableFile><Entries><Entry><ID>1</ID><DefaultText>Own test choice</DefaultText></Entry><Entry><ID>2</ID><DefaultText>Own other choice</DefaultText></Entry></Entries></StringTableFile>')
+        result = extract(self.root)
+        dialogue = next(entity for entity in result["entities"] if entity["kind"] == "dialogue")
+        self.assertTrue(dialogue["data"]["nodes"][0]["isRoot"])
+        self.assertFalse(any(warning == "Missing stringtable text for node 0" for warning in dialogue["data"]["warnings"]))
 
     def test_white_march_later_entry_override_and_fallback(self):
         expansion = self.root / DATA_FOLDER / "data_expansion1/localized/en/text/conversations/test/branch.stringtable"
@@ -276,7 +314,9 @@ class InstallationTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(original.read_bytes(), before)
         self.assertLess(output.stat().st_size, original.stat().st_size)
-        self.assertEqual(validate(json.loads(output.read_text(encoding="utf-8"))), [])
+        result = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(validate(result), [])
+        self.assertEqual(output.stat().st_size, _check_limits(result)["bytes"])
 
     def test_cli_package_cannot_replace_full_extract(self):
         original = self.parent / "full.json"

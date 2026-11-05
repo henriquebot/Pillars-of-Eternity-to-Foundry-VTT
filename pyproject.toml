@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rpgup-pillars-importer"
-version = "0.1.0"
+version = "0.1.3"
 description = "Extrator local e somente leitura de Pillars of Eternity"
 requires-python = ">=3.11"
 

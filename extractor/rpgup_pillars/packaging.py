@@ -84,7 +84,10 @@ def make_package(campaign: dict, *, patterns: tuple[str, ...] = (), kinds: tuple
     source = copy.deepcopy({key: value for key, value in campaign["source"].items() if key != "tables"})
     original = {"path": str(original_path.resolve()) if original_path else None,
                 "sha256": original_sha256,
-                "containsFullSourceTreesAndTables": bool(campaign["source"].get("tables"))}
+                "containsFullSourceTreesAndTables": bool(campaign["source"].get("tables")) and
+                    any("sourceTree" in entity["data"] for entity in campaign["entities"]),
+                "sourceDetail": campaign["source"].get("sourceDetail", "inline"),
+                "auditDirectory": campaign["source"].get("auditDirectory")}
     source["importPackage"] = {"createdAt": now(), "selection": {"sourceGlobs": list(patterns),
                                "kinds": list(kinds), "includeRelated": include_related},
                                "originalExtract": original,

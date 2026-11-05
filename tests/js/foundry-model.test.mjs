@@ -83,6 +83,41 @@ test("maps require real image metadata and remain unvalidated for combat", async
   assert.equal(result.fields["level.background.src"], "assets/synthetic.png");
   assert.match(result.warning, /não validada para combate/);
 });
+test("map knowledge explicitly distinguishes known scenes from exploration scenes", async () => {
+  const known = await describeEntity(bundle([]), entity("map", {width: 1200, height: 800, image: "assets/known.png", mapKnowledge: "known"}));
+  const unexplored = await describeEntity(bundle([]), entity("map", {width: 1200, height: 800, image: "assets/explore.png"}));
+  assert.equal(known.mapKnowledge, "known");
+  assert.equal(unexplored.mapKnowledge, "requires-exploration");
+  const invalid = await describeEntity(bundle([]), entity("map", {width: 1200, height: 800, image: "assets/invalid.png", mapKnowledge: "maybe"}));
+  assert.equal(invalid.supported, false);
+  assert.match(invalid.reason, /mapKnowledge/);
+});
+test("map order is carried to the Scene sort field", async () => {
+  const result = await describeEntity(bundle([]), entity("map", {width: 1200, height: 800, image: "assets/synthetic.webp", sort: 3000}));
+  assert.equal(result.fields.sort, 3000);
+  await assert.rejects(describeEntity(bundle([]), entity("map", {width: 1200, height: 800, image: "assets/synthetic.webp", sort: -1})), /Ordenação/);
+});
+test("map import flags retain only a bounded, sanitized scene feature inventory", async () => {
+  const sourceFeatureInventory = {
+    sourceHash: "b".repeat(64),
+    lights: {identified: 2, converted: 0, status: "forged", items: [{secret: "never persist"}]},
+    collisions: {identified: 90, wallSegmentsConverted: 0, navigationDecoded: false, sourcePath: "machine-path"},
+    triggers: {identified: 22, behavioursInterpreted: 0, customFieldsParsed: false, rawScripts: "private"},
+    ambientSettings: {identified: 1, converted: false},
+    redistribution: true
+  };
+  const result = await describeEntity(bundle([]), entity("map", {width: 1200, height: 800, image: "assets/synthetic.png", sourceFeatureInventory}));
+  const summary = result.meta.sourceFeatureInventory;
+  assert.deepEqual(summary.lights, {identified: 2, converted: 0, status: "pending-review"});
+  assert.equal(summary.collisions.identified, 90);
+  assert.equal(summary.triggers.identified, 22);
+  assert.equal(summary.redistribution, false);
+  assert.equal(JSON.stringify(summary).includes("private"), false);
+  assert.equal(JSON.stringify(summary).includes("machine-path"), false);
+});
+test("map import rejects malformed scene inventory", async () => {
+  await assert.rejects(describeEntity(bundle([]), entity("map", {width: 1200, height: 800, image: "assets/synthetic.png", sourceFeatureInventory: {lights: {identified: 1}}})), /hash de origem/);
+});
 test("bad grid configuration remains pending", async () => {
   const record = entity("map", {width: 1000, height: 1000, image: "assets/synthetic.webp", grid: {size: -1}});
   assert.equal((await describeEntity(bundle([]), record)).supported, false);

@@ -1,0 +1,7 @@
+# Optional external extraction environment only; never a Foundry runtime dependency.
+# Sources: https://pypi.org/project/UnityPy/ and https://pypi.org/project/Pillow/
+UnityPy==1.25.4
+Pillow==13.0.0
+tpk-ar==0.2.4
+# Optional static CLR metadata inspection; does not load game assemblies as code.
+dnfile==0.18.0
