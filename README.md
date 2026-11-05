@@ -2,7 +2,7 @@
 
 Ferramentas de extração e importação local de **Pillars of Eternity 1 / The White March** para **Foundry VTT v14 (referência de desenvolvimento: 14.370)**, com **D&D 5e 6.0.x / regras 2024**. Interface PT-BR.
 
-> **Estado:** o módulo foi sincronizado com o código local 0.1.6 e testado em Foundry 14.370 (mundo de testes), com um piloto de três pins Glimpse. A release **0.1.7** é uma correção de metadados/acentuação do manifesto sobre a mesma base funcional. **Ainda não é uma campanha completa pronta para combate**: falta validar a apresentação dos cards, o acesso como jogador e o processamento em volume.
+> **Estado:** o módulo foi sincronizado com o código local 0.1.6 e testado em Foundry 14.370 (mundo de testes), com um piloto de três pins Glimpse. A release **0.1.8** declara compatibilidade verificada com Foundry **14.370** (o piloto e os testes descritos não equivalem à validação de uma campanha completa). **Ainda não é uma campanha completa pronta para combate**: falta validar a apresentação dos cards, o acesso como jogador e o processamento em volume.
 
 O projeto pesquisa a conversão de mapas pré-renderizados, textos, quests, NPCs, itens e pontos de interesse para cenas, journals e outros recursos do Foundry. O foco é um pipeline reutilizável, com dados intermediários versionados, origem rastreável e reimportação controlada. A conversão não equivale a uma campanha completa e pronta para combate.
 
@@ -18,7 +18,7 @@ Para instalar pelo Foundry, use a **URL do manifesto da release mais recente**:
 https://github.com/henriquebot/Pillars-of-Eternity-to-Foundry-VTT/releases/latest/download/module.json
 ```
 
-**Publicação atual: v0.1.7**, com `module.json` e `module.zip`. Cole a URL acima em **Instalar módulo → URL do manifesto** no Foundry v14. A 0.1.7 corrige os caracteres do manifesto publicado com a 0.1.6, sem alterar as funcionalidades. Para substituir instalação local, faça backup do UserData e confira a versão do mundo de testes.
+**Publicação atual: v0.1.8**, com `module.json` e `module.zip`. Cole a URL acima em **Instalar módulo → URL do manifesto** no Foundry v14. A 0.1.8 adiciona `compatibility.verified: 14.370` sobre a base funcional 0.1.6, sem alterar as funcionalidades. Para substituir instalação local, faça backup do UserData e confira a versão do mundo de testes.
 
 O workflow [Publicar módulo Foundry](.github/workflows/publish-module.yml) testa, empacota e publica `module.json` e `module.zip` quando a versão do manifesto muda. O ZIP inclui apenas código e interfaces do módulo, sem recursos comerciais. Para instalação de desenvolvimento, consulte [as instruções locais](docs/installation.md).
 
